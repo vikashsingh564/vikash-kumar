@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Health Risk Prediction</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+    .container {
+      width: 92%;
+      max-width: 1100px;
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      margin: 30px 0;
+    }
+    h1 { text-align: center; color: #1976d2; margin-bottom: 20px; }
+    .steps { display: flex; justify-content: space-between; margin-bottom: 20px; }
+    .steps div { flex: 1; text-align: center; padding: 10px; border-bottom: 3px solid #90caf9; color: #1976d2; font-weight: bold; }
+    .steps .active { border-bottom: 3px solid #1976d2; }
+    label { font-weight: bold; margin-bottom: 5px; display: block; }
+    .input-icon { position: relative; }
+    .input-icon i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #1976d2; }
+    .input-icon input, .input-icon select { width: 100%; padding: 10px 10px 10px 35px; border: 1px solid #90caf9; border-radius: 10px; box-sizing: border-box; font-size: 14px; }
+    button { background: #1976d2; color: white; border: none; padding: 12px; font-size: 16px; border-radius: 10px; cursor: pointer; width: 100%; transition: background 0.3s; margin-top: 10px; }
+    button:hover { background: #1565c0; }
+    .result-box, .ai-box { margin-top: 20px; padding: 15px; border-radius: 10px; display: none; }
+    .result-box { background: #e3f2fd; color: #0d47a1; font-weight: bold; }
+    .ai-box { background: #f1f8e9; color: #33691e; }
+    .grid-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+    .full-width { grid-column: span 4; }
+    @media(max-width: 900px) { .grid-row { grid-template-columns: repeat(2, 1fr); } }
+    @media(max-width: 600px) { .grid-row { grid-template-columns: 1fr; } }
+
+    /* Dashboard styles */
+    .dashboard { margin-top: 40px; }
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+    .card .title { font-size: 14px; color: #374151; }
+    .card .value { font-size: 24px; margin-top: 6px; color: #1976d2; }
+    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+    .card canvas { width: 100% !important; height: 220px !important; }
+    .chart-grid .card { padding: 12px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+    th { background: #f1f5f9; text-align: left; }
+    .export-row { display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+    .export-row button { width: auto; padding:8px 12px; }
+    .risk-low { color: #138a3f; font-weight:700; }
+    .risk-medium { color: #d97706; font-weight:700; }
+    .risk-high { color: #c0262e; font-weight:700; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧑‍⚕ Health Risk Prediction</h1>
+
+    <div class="steps">
+      <div class="active">Step 1: Enter Details</div>
+      <div>Step 2: Prediction</div>
+      <div>Step 3: Explanation</div>
+    </div>
+
+    <form id="predictionForm">
+      <div class="grid-row">
+        <div class="input-icon">
+          <label>Age</label>
+          <i class="fas fa-calendar"></i>
+          <input type="number" name="age" required>
+        </div>
+        <div class="input-icon">
+          <label>Gender</label>
+          <i class="fas fa-venus-mars"></i>
+          <select name="gender" required>
+            <option value="">Select</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+        <div class="input-icon">
+          <label>Blood Type</label>
+          <i class="fas fa-tint"></i>
+          <select name="blood_type" required>
+            <option value="">Select</option>
+            <option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="O+">O+</option><option value="O-">O-</option><option value="AB+">AB+</option><option value="AB-">AB-</option>
+          </select>
+        </div>
+        <div class="input-icon">
+          <label>Medical Condition</label>
+          <i class="fas fa-notes-medical"></i>
+          <input type="text" name="medical_condition" required>
+        </div>
+      </div>
+
+      <div class="grid-row">
+        <div class="full-width input-icon">
+          <label>Medication</label>
+          <i class="fas fa-pills"></i>
+          <input type="text" name="medication" required>
+        </div>
+      </div>
+
+      <button type="submit">Predict</button>
+    </form>
+
+    <div id="result" class="result-box"></div>
+    <div id="aiExplanation" class="ai-box"></div>
+
+    <!-- 🧠 AGENTIC AI SECTION -->
+    <div id="agentBox" class="ai-box" style="background:#fff8e1; color:#5d4037; display:none;">
+      <strong>🧩 Agentic AI Advisor:</strong>
+      <div id="agentMessage" style="margin-top:8px;"></div>
+    </div>
+    <!-- END AGENTIC AI SECTION -->
+
+    <div id="chartContainer" style="display:none;">
+      <h2>Prediction Probabilities</h2>
+      <button id="toggleChart" style="margin-bottom:10px; padding:8px 12px; background:#3498db; color:white; border:none; border-radius:6px; cursor:pointer;">
+        Switch to Pie Chart
+      </button>
+      <canvas id="probabilityChart" width="450" height="350" style="max-width:450px; max-height:350px;"></canvas>
+     </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard">
+      <div class="export-row">
+        <h2 style="margin:0; display:inline-flex; align-items:center;">📊 Dashboard</h2>
+        <div style="flex:1"></div>
+        <button id="exportCsv">Export CSV</button>
+        <button id="exportExcel">Export Excel</button>
+        <button id="exportPdf">Export PDF</button>
+      </div>
+
+      <div class="kpis">
+        <div class="card"><div class="title">Total Predictions</div><div id="kpi_total" class="value">—</div></div>
+        <div class="card"><div class="title">7-Day Predictions</div><div id="kpi_7d" class="value">—</div></div>
+        <div class="card"><div class="title">High-Risk % (7d)</div><div id="kpi_high" class="value">—</div></div>
+        <div class="card"><div class="title">Avg Latency (24h)</div><div id="kpi_lat" class="value">—</div></div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="card"><canvas id="chart_trend"></canvas></div>
+        <div class="card"><canvas id="chart_condition"></canvas></div>
+      </div>
+
+      <h3>Recent Predictions</h3>
+      <table id="tbl">
+        <thead>
+          <tr><th>Time</th><th>Pred</th><th>Proba</th><th>Latency</th><th>Age</th><th>Gender</th><th>Condition</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const stepElements = document.querySelectorAll(".steps div");
+    let currentChartType = "bar";
+    let chartInstance = null;
+
+    function setStep(step) {
+      stepElements.forEach((el, idx) => {
+        el.classList.remove("active");
+        if (idx < step) el.classList.add("active");
+      });
+    }
+
+    document.getElementById("predictionForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      setStep(2);
+      const formData = new FormData(e.target);
+      const data = {};
+      formData.forEach((value, key) => { data[key] = value; });
+
+      const response = await fetch("/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+      const resultDiv = document.getElementById("result");
+      const aiExplanation = document.getElementById("aiExplanation");
+      const chartContainer = document.getElementById("chartContainer");
+      const agentBox = document.getElementById("agentBox");
+      const agentMessage = document.getElementById("agentMessage");
+
+      if (result.error) {
+        resultDiv.style.display = "block";
+        resultDiv.innerText = "❌ Error: " + result.error;
+        aiExplanation.style.display = "none";
+        chartContainer.style.display = "none";
+        agentBox.style.display = "none";
+        return;
+      }
+
+      resultDiv.style.display = "block";
+      resultDiv.innerText = "Predicted Risk Level: " + result.prediction;
+
+      aiExplanation.style.display = "block";
+      aiExplanation.innerHTML = "<strong>🤖 AI Insight:</strong> " + result.explanation;
+
+      chartContainer.style.display = "block";
+      renderChart(result.probabilities);
+      setStep(3);
+      fetchAndRenderDashboard();
+
+      // 🧠 === CALL AGENTIC AI ENDPOINT ===
+      try {
+        const agentResponse = await fetch("/agent_decision", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prediction: result.prediction,
+            explanation: result.explanation,
+            input_data: data
+          })
+        });
+        const agentResult = await agentResponse.json();
+        if (agentResult && agentResult.advice) {
+          agentMessage.innerText = agentResult.advice;
+          agentBox.style.display = "block";
+        } else {
+          agentBox.style.display = "none";
+        }
+      } catch (err) {
+        console.error("Agentic AI call failed:", err);
+        agentBox.style.display = "none";
+      }
+      // 🧠 === END AGENTIC AI ===
+    });
+
+    function renderChart(probabilities) {
+      const ctx = document.getElementById("probabilityChart").getContext("2d");
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type: currentChartType,
+        data: {
+          labels: ["Low Risk", "Medium Risk", "High Risk"],
+          datasets: [{
+            label: "Prediction Probabilities",
+            data: probabilities,
+            backgroundColor: ["#2ecc71", "#f1c40f", "#e74c3c"]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            tooltip: { callbacks: { label: function(context) { return (context.raw * 100).toFixed(1) + "%"; } } }
+          },
+          scales: currentChartType === "bar" ? { y: { beginAtZero: true, max: 1 } } : {}
+        }
+      });
+    }
+
+    document.getElementById("toggleChart").addEventListener("click", () => {
+      currentChartType = currentChartType === "bar" ? "pie" : "bar";
+      document.getElementById("toggleChart").innerText = currentChartType === "bar" ? "Switch to Pie Chart" : "Switch to Bar Chart";
+      if (chartInstance) renderChart(chartInstance.data.datasets[0].data);
+    });
+
+    /* === Dashboard Fetch & Render Logic === */
+    let dashRiskChart = null;
+    let dashCondChart = null;
+
+    function riskClassCss(pred) {
+      if (!pred) return '';
+      if (pred.toLowerCase().includes('low')) return 'risk-low';
+      if (pred.toLowerCase().includes('medium')) return 'risk-medium';
+      if (pred.toLowerCase().includes('high')) return 'risk-high';
+      return '';
+    }
+
+    async function fetchAndRenderDashboard() {
+      try {
+        const resp = await fetch('/dashboard-data');
+        const data = await resp.json();
+        if (data.error) { console.error("Dashboard error:", data.error); return; }
+
+        document.getElementById('kpi_total').textContent = data.total_predictions ?? '—';
+        document.getElementById('kpi_7d').textContent = data.predictions_7d ?? '—';
+        document.getElementById('kpi_high').textContent = (data.high_risk_percent_7d ?? 0) + '%';
+        document.getElementById('kpi_lat').textContent = (data.avg_latency_24h ?? 0) + ' ms';
+
+        const rc = data.risk_counts_7d || { low:0, medium:0, high:0 };
+        const labels = ['Low Risk','Medium Risk','High Risk'];
+        const values = [rc.low, rc.medium, rc.high];
+        const ctx1 = document.getElementById('chart_trend').getContext('2d');
+        if (dashRiskChart) dashRiskChart.destroy();
+        dashRiskChart = new Chart(ctx1, {
+          type: 'bar',
+          data: { labels, datasets: [{ label: 'Count (last 7d)', data: values, backgroundColor: ['#2ecc71','#f1c40f','#e74c3c'] }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        });
+
+        const recent = data.recent_predictions || [];
+        const condCounts = {};
+        recent.forEach(r => {
+          const c = r.condition || 'Unknown';
+          condCounts[c] = (condCounts[c] || 0) + 1;
+        });
+        const condLabels = Object.keys(condCounts).slice(0,6);
+        const condValues = condLabels.map(k => condCounts[k]);
+        const ctx2 = document.getElementById('chart_condition').getContext('2d');
+        if (dashCondChart) dashCondChart.destroy();
+        dashCondChart = new Chart(ctx2, {
+          type: 'pie',
+          data: { labels: condLabels, datasets: [{ data: condValues }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+        });
+
+        const tbody = document.querySelector('#tbl tbody');
+        tbody.innerHTML = '';
+        (data.recent_predictions || []).forEach(x => {
+          const probaText = Array.isArray(x.probabilities) ? x.probabilities.map(p=> (Number(p).toFixed(3)) ).join(", ") : (x.probabilities ?? "");
+          const tr = document.createElement('tr');
+          const cssClass = riskClassCss(x.prediction);
+          tr.innerHTML = `<td>${x.time}</td><td class="${cssClass}">${x.prediction}</td><td>${probaText}</td><td>${x.latency}</td><td>${x.age ?? ''}</td><td>${x.gender ?? ''}</td><td>${x.condition ?? ''}</td>`;
+          tbody.appendChild(tr);
+        });
+
+      } catch (err) {
+        console.error("Failed to fetch dashboard data:", err);
+      }
+    }
+
+    (function initDashboard(){
+      fetchAndRenderDashboard();
+      setInterval(fetchAndRenderDashboard, 10000);
+    })();
+  </script>
+</body>
+</html>

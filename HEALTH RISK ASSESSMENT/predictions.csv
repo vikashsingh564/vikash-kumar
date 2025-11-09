@@ -1,0 +1,3 @@
+Time,Prediction,Proba_Low,Proba_Medium,Proba_High,Latency_ms,Age,Gender,Condition
+2025-09-13 15:54:32,Medium Risk,0.199772447347641,0.45306000113487244,0.3471675217151642,3121.105,26,Male,obesity
+2025-09-13 10:28:01,26,Male,obesity,Medium Risk,0.19977245,0.45306,0.34716752,3482.09
